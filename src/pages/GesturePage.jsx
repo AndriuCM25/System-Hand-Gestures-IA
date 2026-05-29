@@ -1,63 +1,90 @@
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import GestureCamera from '../components/GestureCamera';
 import HolographicBackground from '../components/HolographicBackground';
-import { FaHandPaper, FaFistRaised, FaThumbsUp, FaPeace, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+import GridScan from '../components/GridScan';
+import { 
+  FaHandPaper, 
+  FaFistRaised, 
+  FaThumbsUp, 
+  FaPeace, 
+  FaArrowRight, 
+  FaArrowLeft,
+  FaLightbulb,
+  FaRocket,
+  FaBrain,
+  FaEye
+} from 'react-icons/fa';
 
 const GesturePage = () => {
+  const [selectedGesture, setSelectedGesture] = useState(null);
+
   const gestures = [
     {
       icon: FaHandPaper,
       name: 'Mano Abierta',
       action: 'Activar Sistema',
       color: 'cyan',
-      description: 'Extiende todos los dedos para activar'
+      emoji: '✋',
+      description: 'Extiende todos los dedos',
+      tip: 'Mantén la palma hacia la cámara'
     },
     {
       icon: FaFistRaised,
       name: 'Puño Cerrado',
       action: 'Pausar',
       color: 'red',
-      description: 'Cierra la mano completamente'
+      emoji: '✊',
+      description: 'Cierra la mano completamente',
+      tip: 'Aprieta bien el puño'
     },
     {
       icon: FaThumbsUp,
       name: 'Pulgar Arriba',
       action: 'Confirmar',
       color: 'green',
-      description: 'Levanta el pulgar para confirmar'
+      emoji: '👍',
+      description: 'Levanta el pulgar',
+      tip: 'Cierra los demás dedos'
     },
     {
       icon: FaPeace,
       name: 'Dos Dedos',
       action: 'Abrir Menú',
       color: 'yellow',
-      description: 'Muestra índice y medio'
+      emoji: '✌️',
+      description: 'Muestra índice y medio',
+      tip: 'Forma una "V" con los dedos'
     },
     {
       icon: FaArrowRight,
       name: 'Mano Derecha',
       action: 'Siguiente',
       color: 'blue',
-      description: 'Apunta hacia la derecha'
+      emoji: '👉',
+      description: 'Apunta hacia la derecha',
+      tip: 'Extiende el índice'
     },
     {
       icon: FaArrowLeft,
       name: 'Mano Izquierda',
       action: 'Anterior',
       color: 'purple',
-      description: 'Apunta hacia la izquierda'
+      emoji: '👈',
+      description: 'Apunta hacia la izquierda',
+      tip: 'Extiende el índice'
     }
   ];
 
   const colorClasses = {
-    cyan: 'border-cyan-400/30 bg-cyan-400/5 hover:border-cyan-400/50',
-    red: 'border-red-400/30 bg-red-400/5 hover:border-red-400/50',
-    green: 'border-green-400/30 bg-green-400/5 hover:border-green-400/50',
-    yellow: 'border-yellow-400/30 bg-yellow-400/5 hover:border-yellow-400/50',
-    blue: 'border-blue-400/30 bg-blue-400/5 hover:border-blue-400/50',
-    purple: 'border-purple-400/30 bg-purple-400/5 hover:border-purple-400/50',
+    cyan: 'border-cyan-400/50 bg-cyan-400/10 hover:bg-cyan-400/20 hover:border-cyan-400',
+    red: 'border-red-400/50 bg-red-400/10 hover:bg-red-400/20 hover:border-red-400',
+    green: 'border-green-400/50 bg-green-400/10 hover:bg-green-400/20 hover:border-green-400',
+    yellow: 'border-yellow-400/50 bg-yellow-400/10 hover:bg-yellow-400/20 hover:border-yellow-400',
+    blue: 'border-blue-400/50 bg-blue-400/10 hover:bg-blue-400/20 hover:border-blue-400',
+    purple: 'border-purple-400/50 bg-purple-400/10 hover:bg-purple-400/20 hover:border-purple-400',
   };
 
   const iconColorClasses = {
@@ -75,132 +102,252 @@ const GesturePage = () => {
       <Navbar />
       <Sidebar />
 
-      <div className="ml-64 mt-20 p-8 relative z-10">
+      <div className="ml-0 md:ml-64 mt-20 p-4 sm:p-6 lg:p-8 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <h1 className="text-4xl font-bold neon-text mb-2">IA Gestual</h1>
-          <p className="text-gray-400">Sistema de detección y reconocimiento de gestos en tiempo real</p>
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+              <FaBrain className="text-2xl text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold neon-text">IA Gestual</h1>
+              <p className="text-sm sm:text-base text-gray-400">Detección en tiempo real con MediaPipe</p>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Camera Section */}
-        <div className="mb-8">
-          <GestureCamera />
+        {/* Main Content - Grid Layout */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          {/* Camera Section - 2 columns */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="h-full relative"
+            >
+              {/* GridScan Background Effect */}
+              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-0">
+                <GridScan
+                  sensitivity={0.55}
+                  lineThickness={1}
+                  linesColor="#2F293A"
+                  gridScale={0.1}
+                  scanColor="#00d9ff"
+                  scanOpacity={0.5}
+                  bloomIntensity={0.6}
+                  chromaticAberration={0.002}
+                  noiseIntensity={0.01}
+                  lineJitter={0.1}
+                  scanGlow={0.5}
+                  scanSoftness={2}
+                  enablePost={true}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+              
+              {/* Camera Component */}
+              <div className="relative z-10">
+                <GestureCamera />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Info Panel - 1 column */}
+          <div className="space-y-4">
+            {/* Stats Cards */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="glass-effect rounded-xl p-4 border border-primary/30"
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <FaEye className="text-2xl text-primary" />
+                <h3 className="font-bold text-lg">Estado del Sistema</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Manos Detectadas</span>
+                  <span className="text-primary font-bold">0-2</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Precisión IA</span>
+                  <span className="text-green-400 font-bold">98.5%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">FPS</span>
+                  <span className="text-yellow-400 font-bold">30</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Latencia</span>
+                  <span className="text-cyan-400 font-bold">&lt;50ms</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Quick Tips */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="glass-effect rounded-xl p-4 border border-yellow-400/30 bg-yellow-400/5"
+            >
+              <div className="flex items-center space-x-2 mb-3">
+                <FaLightbulb className="text-xl text-yellow-400" />
+                <h3 className="font-bold text-yellow-400">Tips Rápidos</h3>
+              </div>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li className="flex items-start space-x-2">
+                  <span className="text-yellow-400 mt-0.5">•</span>
+                  <span>Buena iluminación</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-yellow-400 mt-0.5">•</span>
+                  <span>50-100 cm de distancia</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-yellow-400 mt-0.5">•</span>
+                  <span>Gestos claros y lentos</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-yellow-400 mt-0.5">•</span>
+                  <span>Mantén 1-2 segundos</span>
+                </li>
+              </ul>
+            </motion.div>
+
+            {/* Technology Badge */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="glass-effect rounded-xl p-4 border border-primary/30"
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <FaRocket className="text-primary" />
+                <h3 className="font-bold text-sm">Tecnología</h3>
+              </div>
+              <p className="text-xs text-gray-400">MediaPipe Hands</p>
+              <p className="text-xs text-gray-400">TensorFlow.js</p>
+              <p className="text-xs text-gray-400">21 Landmarks Detection</p>
+            </motion.div>
+          </div>
         </div>
 
-        {/* Gestures Guide */}
+        {/* Gestures Guide - Compact Cards */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
+          transition={{ delay: 0.3 }}
+          className="mb-6"
         >
-          <h2 className="text-2xl font-bold text-primary mb-6">Gestos Disponibles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-primary mb-4 flex items-center space-x-2">
+            <FaHandPaper className="text-primary" />
+            <span>Gestos Disponibles</span>
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {gestures.map((gesture, index) => {
               const Icon = gesture.icon;
+              const isSelected = selectedGesture === index;
               return (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  className={`glass-effect rounded-xl p-6 border transition-all ${colorClasses[gesture.color]}`}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  onClick={() => setSelectedGesture(isSelected ? null : index)}
+                  className={`glass-effect rounded-xl p-4 border-2 transition-all cursor-pointer ${
+                    isSelected ? colorClasses[gesture.color] + ' shadow-neon' : 'border-primary/20 hover:border-primary/40'
+                  }`}
                 >
-                  <div className="flex items-start space-x-4">
-                    <div className={`p-3 rounded-lg ${colorClasses[gesture.color]}`}>
-                      <Icon className={`text-3xl ${iconColorClasses[gesture.color]}`} />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg mb-1">{gesture.name}</h3>
-                      <p className={`text-sm font-medium mb-2 ${iconColorClasses[gesture.color]}`}>
-                        {gesture.action}
-                      </p>
-                      <p className="text-xs text-gray-400">{gesture.description}</p>
-                    </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">{gesture.emoji}</div>
+                    <h3 className="font-bold text-sm mb-1">{gesture.name}</h3>
+                    <p className={`text-xs font-medium ${iconColorClasses[gesture.color]}`}>
+                      {gesture.action}
+                    </p>
                   </div>
                 </motion.div>
               );
             })}
           </div>
+
+          {/* Selected Gesture Detail */}
+          {selectedGesture !== null && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className={`mt-4 glass-effect rounded-xl p-6 border-2 ${colorClasses[gestures[selectedGesture].color]}`}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="text-6xl">{gestures[selectedGesture].emoji}</div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold mb-2">{gestures[selectedGesture].name}</h3>
+                  <p className={`text-lg font-medium mb-3 ${iconColorClasses[gestures[selectedGesture].color]}`}>
+                    {gestures[selectedGesture].action}
+                  </p>
+                  <p className="text-gray-300 mb-2">{gestures[selectedGesture].description}</p>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <FaLightbulb className="text-yellow-400" />
+                    <span className="text-yellow-400 font-medium">Tip:</span>
+                    <span className="text-gray-400">{gestures[selectedGesture].tip}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
 
-        {/* Instructions */}
+        {/* Instructions - Compact */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="glass-effect rounded-2xl p-8 border border-primary/20"
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
-          <h2 className="text-2xl font-bold text-primary mb-6">Instrucciones de Uso</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-bold text-lg mb-3 text-white">Preparación</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Asegúrate de tener buena iluminación</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Colócate a 50-100 cm de la cámara</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Usa un fondo uniforme si es posible</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Mantén la mano dentro del cuadro</span>
-                </li>
-              </ul>
+          <div className="glass-effect rounded-xl p-4 border border-primary/20">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <span className="text-primary font-bold">1</span>
+              </div>
+              <h3 className="font-bold text-sm">Preparación</h3>
             </div>
-            <div>
-              <h3 className="font-bold text-lg mb-3 text-white">Consejos</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Realiza gestos claros y definidos</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Mantén el gesto por 1-2 segundos</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Evita movimientos bruscos</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>La precisión mejora con la práctica</span>
-                </li>
-              </ul>
-            </div>
+            <p className="text-xs text-gray-400">Buena iluminación y fondo uniforme</p>
           </div>
-        </motion.div>
 
-        {/* Technical Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mt-8 grid md:grid-cols-3 gap-6"
-        >
-          <div className="glass-effect rounded-xl p-6 border border-primary/20">
-            <h3 className="font-bold text-primary mb-2">Tecnología</h3>
-            <p className="text-sm text-gray-300">MediaPipe Hands + TensorFlow.js</p>
+          <div className="glass-effect rounded-xl p-4 border border-primary/20">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <span className="text-primary font-bold">2</span>
+              </div>
+              <h3 className="font-bold text-sm">Posición</h3>
+            </div>
+            <p className="text-xs text-gray-400">50-100 cm de la cámara</p>
           </div>
-          <div className="glass-effect rounded-xl p-6 border border-primary/20">
-            <h3 className="font-bold text-primary mb-2">Precisión</h3>
-            <p className="text-sm text-gray-300">98.5% de confianza promedio</p>
+
+          <div className="glass-effect rounded-xl p-4 border border-primary/20">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <span className="text-primary font-bold">3</span>
+              </div>
+              <h3 className="font-bold text-sm">Ejecución</h3>
+            </div>
+            <p className="text-xs text-gray-400">Gestos claros y definidos</p>
           </div>
-          <div className="glass-effect rounded-xl p-6 border border-primary/20">
-            <h3 className="font-bold text-primary mb-2">Latencia</h3>
-            <p className="text-sm text-gray-300">Detección en tiempo real (&lt;50ms)</p>
+
+          <div className="glass-effect rounded-xl p-4 border border-primary/20">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                <span className="text-primary font-bold">4</span>
+              </div>
+              <h3 className="font-bold text-sm">Práctica</h3>
+            </div>
+            <p className="text-xs text-gray-400">La precisión mejora con el uso</p>
           </div>
         </motion.div>
       </div>

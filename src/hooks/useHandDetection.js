@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGesture } from '../context/GestureContext';
 
 const GESTURES = {
@@ -11,16 +11,20 @@ const GESTURES = {
 };
 
 export const useHandDetection = () => {
+  // TODOS los hooks deben estar al inicio, sin condiciones
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const handsRef = useRef(null);
   const animationRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const lastGestureTimeRef = useRef(0);
+  
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [landmarks, setLandmarks] = useState(null);
+  
   const { updateGesture, addGestureToHistory, isActive } = useGesture();
 
-  const detectGesture = (handLandmarks) => {
+  const detectGesture = useCallback((handLandmarks) => {
     if (!handLandmarks || handLandmarks.length === 0) return null;
 
     const landmarks = handLandmarks[0];
@@ -56,50 +60,9 @@ export const useHandDetection = () => {
     }
 
     return null;
-  };
+  }, []);
 
-  const onResults = (results) => {
-    if (!canvasRef.current) return;
-
-    const canvasCtx = canvasRef.current.getContext('2d');
-    const canvas = canvasRef.current;
-    
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Dibujar la imagen del video
-    if (results.image) {
-      canvasCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-    }
-
-    // Dibujar landmarks si hay manos detectadas
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      setLandmarks(results.multiHandLandmarks);
-      
-      for (const landmarks of results.multiHandLandmarks) {
-        drawConnectors(canvasCtx, landmarks, canvas.width, canvas.height);
-        drawLandmarks(canvasCtx, landmarks, canvas.width, canvas.height);
-      }
-
-      // Detectar gesto
-      const gesture = detectGesture(results.multiHandLandmarks);
-      if (gesture && isActive) {
-        updateGesture(gesture.name, gesture.confidence);
-        
-        if (!window.lastGestureTime || Date.now() - window.lastGestureTime > 2000) {
-          addGestureToHistory(gesture);
-          window.lastGestureTime = Date.now();
-        }
-      }
-    } else {
-      setLandmarks(null);
-      updateGesture(null, 0);
-    }
-    
-    canvasCtx.restore();
-  };
-
-  const drawConnectors = (ctx, landmarks, width, height) => {
+  const drawConnectors = useCallback((ctx, landmarks, width, height) => {
     const connections = [
       [0, 1], [1, 2], [2, 3], [3, 4],
       [0, 5], [5, 6], [6, 7], [7, 8],
@@ -123,9 +86,9 @@ export const useHandDetection = () => {
       ctx.lineTo(endPoint.x * width, endPoint.y * height);
       ctx.stroke();
     });
-  };
+  }, []);
 
-  const drawLandmarks = (ctx, landmarks, width, height) => {
+  const drawLandmarks = useCallback((ctx, landmarks, width, height) => {
     landmarks.forEach((landmark, index) => {
       ctx.beginPath();
       ctx.arc(
@@ -140,9 +103,51 @@ export const useHandDetection = () => {
       ctx.shadowColor = '#00d9ff';
       ctx.fill();
     });
-  };
+  }, []);
 
-  const initializeCamera = async () => {
+  const onResults = useCallback((results) => {
+    if (!canvasRef.current) return;
+
+    const canvasCtx = canvasRef.current.getContext('2d', { alpha: false });
+    const canvas = canvasRef.current;
+    
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Dibujar la imagen del video
+    if (results.image) {
+      canvasCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Dibujar landmarks si hay manos detectadas
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      setLandmarks(results.multiHandLandmarks);
+      
+      for (const landmarks of results.multiHandLandmarks) {
+        drawConnectors(canvasCtx, landmarks, canvas.width, canvas.height);
+        drawLandmarks(canvasCtx, landmarks, canvas.width, canvas.height);
+      }
+
+      // Detectar gesto con throttle
+      const gesture = detectGesture(results.multiHandLandmarks);
+      if (gesture && isActive) {
+        updateGesture(gesture.name, gesture.confidence);
+        
+        const now = Date.now();
+        if (now - lastGestureTimeRef.current > 2000) {
+          addGestureToHistory(gesture);
+          lastGestureTimeRef.current = now;
+        }
+      }
+    } else {
+      setLandmarks(null);
+      updateGesture(null, 0);
+    }
+    
+    canvasCtx.restore();
+  }, [isActive, updateGesture, addGestureToHistory, detectGesture, drawConnectors, drawLandmarks]);
+
+  const initializeCamera = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -152,7 +157,8 @@ export const useHandDetection = () => {
         video: { 
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: 'user'
+          facingMode: 'user',
+          frameRate: { ideal: 30, max: 30 }
         }
       });
 
@@ -167,50 +173,66 @@ export const useHandDetection = () => {
         });
       }
 
-      // Cargar MediaPipe Hands
+      // Cargar MediaPipe Hands con script dinámico
       try {
-        const { Hands } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js');
-        
-        const hands = new Hands({
+        // Cargar el script de MediaPipe
+        if (!window.Hands) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+
+        const hands = new window.Hands({
           locateFile: (file) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`;
           }
         });
 
         hands.setOptions({
-          maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.7,
-          minTrackingConfidence: 0.7
+          maxNumHands: 2,              // ✅ Detectar 2 manos
+          modelComplexity: 1,          // Modelo medio para mejor precisión
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
         });
 
         hands.onResults(onResults);
         handsRef.current = hands;
 
-        // Procesar frames
-        const processFrame = async () => {
-          if (videoRef.current && videoRef.current.readyState === 4 && handsRef.current) {
-            try {
-              await handsRef.current.send({ image: videoRef.current });
-            } catch (err) {
-              console.warn('Error procesando frame:', err);
+        // Procesar frames con throttle
+        let lastFrameTime = 0;
+        const targetFPS = 30;
+        const frameInterval = 1000 / targetFPS;
+
+        const processFrame = async (currentTime) => {
+          if (currentTime - lastFrameTime >= frameInterval) {
+            if (videoRef.current && videoRef.current.readyState === 4 && handsRef.current) {
+              try {
+                await handsRef.current.send({ image: videoRef.current });
+              } catch (err) {
+                console.warn('Error procesando frame:', err);
+              }
             }
+            lastFrameTime = currentTime;
           }
           animationRef.current = requestAnimationFrame(processFrame);
         };
         
-        processFrame();
+        animationRef.current = requestAnimationFrame(processFrame);
         setIsLoading(false);
 
       } catch (err) {
         console.error('Error cargando MediaPipe:', err);
-        setError('Error al cargar el sistema de IA. Usando detección básica.');
+        setError('Error al cargar el sistema de IA. Mostrando solo video.');
         setIsLoading(false);
         
         // Fallback: mostrar solo el video sin detección
         const processVideoOnly = () => {
           if (canvasRef.current && videoRef.current && videoRef.current.readyState === 4) {
-            const ctx = canvasRef.current.getContext('2d');
+            const ctx = canvasRef.current.getContext('2d', { alpha: false });
             ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
           }
           animationRef.current = requestAnimationFrame(processVideoOnly);
@@ -223,11 +245,12 @@ export const useHandDetection = () => {
       setError('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
       setIsLoading(false);
     }
-  };
+  }, [onResults]);
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     }
     
     if (videoRef.current && videoRef.current.srcObject) {
@@ -240,13 +263,13 @@ export const useHandDetection = () => {
       handsRef.current.close();
       handsRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
 
   return {
     videoRef,
