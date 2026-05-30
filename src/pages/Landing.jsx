@@ -2,11 +2,12 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FaHandPaper, FaBrain, FaRocket, FaCity, FaShieldAlt,
+  FaBrain, FaRocket, FaCity, FaShieldAlt,
   FaGlobe, FaMicrochip, FaEye, FaArrowRight, FaChevronDown
 } from 'react-icons/fa';
 import HolographicBackground from '../components/HolographicBackground';
-import RobotHand3D from '../components/RobotHand3D';
+import SplineRobot from '../components/SplineRobot';
+import manoLogo from '../assets/mano.png';
 
 /* ── Tokens ─────────────────────────────────────────────── */
 const E = {
@@ -153,8 +154,17 @@ const Landing = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const heroY       = useTransform(scrollYProgress, [0, 0.6], [0, -40]);
 
+  // Custom icon component for mano.png
+  const HandIcon = () => (
+    <img 
+      src={manoLogo} 
+      alt="Hand" 
+      style={{ width: '16px', height: '16px', objectFit: 'contain', filter: 'drop-shadow(0 0 4px rgba(0,207,255,0.5))' }}
+    />
+  );
+
   const benefits = [
-    { icon: FaHandPaper, title:'Navegación Touchless',     description:'Control total sin contacto físico mediante gestos inteligentes reconocidos al instante.' },
+    { icon: HandIcon, title:'Navegación Touchless',     description:'Control total sin contacto físico mediante gestos inteligentes reconocidos al instante.' },
     { icon: FaBrain,     title:'IA en Tiempo Real',        description:'Procesamiento instantáneo con MediaPipe y TensorFlow.js directamente en el navegador.' },
     { icon: FaShieldAlt, title:'Accesibilidad Inteligente',description:'Diseñado y optimizado para personas con diversidad funcional motriz.' },
     { icon: FaCity,      title:'Integración Smart City',   description:'Compatible con kioskos públicos y pantallas interactivas urbanas.' },
@@ -192,9 +202,43 @@ const Landing = () => {
       ═══════════════════════════════════ */}
       <section ref={heroRef} style={{ position:'relative', zIndex:10, minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'5rem 1.5rem 3rem' }}>
 
-        {/* Glow ambiental */}
-        <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-          <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:800, height:800, borderRadius:'50%', background:'radial-gradient(circle,rgba(0,80,180,0.07) 0%,transparent 68%)' }} />
+        {/* Glow ambiental mejorado */}
+        <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ 
+              position:'absolute', 
+              top:'50%', 
+              left:'50%', 
+              transform:'translate(-50%,-50%)', 
+              width:1000, 
+              height:1000, 
+              borderRadius:'50%', 
+              background:'radial-gradient(circle,rgba(0,80,180,0.12) 0%,rgba(0,207,255,0.08) 40%,transparent 70%)',
+              filter: 'blur(60px)'
+            }} 
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.4, 0.2]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            style={{ 
+              position:'absolute', 
+              top:'30%', 
+              right:'10%', 
+              width:600, 
+              height:600, 
+              borderRadius:'50%', 
+              background:'radial-gradient(circle,rgba(0,207,255,0.1) 0%,transparent 70%)',
+              filter: 'blur(50px)'
+            }} 
+          />
         </div>
 
         <motion.div style={{ opacity: heroOpacity, y: heroY, width:'100%', maxWidth:1200, margin:'0 auto' }}>
@@ -208,35 +252,72 @@ const Landing = () => {
               style={{ textAlign:'left' }}
               className="text-center lg:text-left"
             >
-              {/* Badge */}
+              {/* Badge mejorado */}
               <motion.div
                 initial={{ opacity:0, y:14 }}
                 animate={{ opacity:1, y:0 }}
                 transition={{ delay:0.2 }}
                 style={{
-                  display:'inline-flex', alignItems:'center', gap:8,
-                  padding:'6px 14px', borderRadius:40,
-                  background:'rgba(0,207,255,0.06)',
+                  display:'inline-flex', alignItems:'center', gap:10,
+                  padding:'8px 18px', borderRadius:50,
+                  background:`linear-gradient(135deg, rgba(0,207,255,0.1) 0%, rgba(0,80,255,0.08) 100%)`,
                   border:`1px solid ${E.border}`,
-                  marginBottom:20,
+                  marginBottom:24,
+                  boxShadow: `0 4px 16px rgba(0,207,255,0.15), inset 0 1px 0 rgba(255,255,255,0.05)`
                 }}
               >
-                <FaMicrochip style={{ color: E.primary, fontSize:12 }} className="animate-pulse" />
-                <span style={{ fontSize:11, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em' }}>
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                >
+                  <FaMicrochip style={{ color: E.primary, fontSize:14 }} />
+                </motion.div>
+                <span style={{ fontSize:11, fontFamily:'monospace', color: E.primary, letterSpacing:'0.08em', fontWeight: 600 }}>
                   Powered by AI & Computer Vision
                 </span>
               </motion.div>
 
-              <h1 style={{ fontSize:'clamp(2.6rem,5vw,4.2rem)', fontWeight:900, lineHeight:1, margin:0, marginBottom:16, letterSpacing:'-0.04em', color: E.text }}>
+              <h1 style={{ 
+                fontSize:'clamp(2.8rem,5.5vw,4.8rem)', 
+                fontWeight:900, 
+                lineHeight:1, 
+                margin:0, 
+                marginBottom:18, 
+                letterSpacing:'-0.04em', 
+                color: E.text,
+                textShadow: `0 0 40px rgba(0,207,255,0.3)`
+              }}>
                 HAND
-                <span style={{ color: E.primary, display:'block' }}>CONTROL AI</span>
+                <span style={{ 
+                  color: E.primary, 
+                  display:'block',
+                  background: `linear-gradient(135deg, ${E.primary} 0%, #0080FF 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  CONTROL AI
+                </span>
               </h1>
 
-              <p style={{ fontSize:'clamp(1rem,1.5vw,1.2rem)', color:'rgba(224,247,255,0.6)', marginBottom:8, fontWeight:500 }}>
+              <p style={{ 
+                fontSize:'clamp(1.1rem,1.6vw,1.35rem)', 
+                color:'rgba(224,247,255,0.7)', 
+                marginBottom:10, 
+                fontWeight:600,
+                letterSpacing: '-0.01em'
+              }}>
                 Sistema Inteligente de Navegación por Gestos
               </p>
-              <p style={{ fontSize:13, color: E.muted, marginBottom:28, maxWidth:420, lineHeight:1.7, fontFamily:'monospace' }}>
-                Controla la tecnología sin tocar la pantalla. Experimenta el futuro de la interacción humano-computadora.
+              <p style={{ 
+                fontSize:14, 
+                color: E.muted, 
+                marginBottom:32, 
+                maxWidth:460, 
+                lineHeight:1.8, 
+                fontFamily:'monospace' 
+              }}>
+                Controla la tecnología sin tocar la pantalla. Experimenta el futuro de la interacción humano-computadora con IA avanzada.
               </p>
 
               {/* Quick features */}
@@ -258,78 +339,162 @@ const Landing = () => {
               </div>
 
               {/* CTAs */}
-              <div style={{ display:'flex', gap:10, flexWrap:'wrap' }} className="justify-center lg:justify-start">
+              <div style={{ display:'flex', gap:12, flexWrap:'wrap' }} className="justify-center lg:justify-start">
                 <Link to="/login">
                   <motion.button
-                    whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
+                    whileHover={{ scale:1.05, boxShadow: '0 0 40px rgba(0,207,255,0.5)' }} 
+                    whileTap={{ scale:0.97 }}
                     style={{
-                      padding:'12px 26px',
-                      background: E.primary,
-                      border:'none', borderRadius:4,
-                      color:'#020A12', fontWeight:800, fontSize:13,
-                      fontFamily:'monospace', letterSpacing:'0.1em', textTransform:'uppercase',
-                      cursor:'pointer', display:'flex', alignItems:'center', gap:7,
-                      boxShadow:`0 0 24px rgba(0,207,255,0.3)`,
+                      padding:'14px 32px',
+                      background: `linear-gradient(135deg, ${E.primary} 0%, #0080FF 100%)`,
+                      border:'none', 
+                      borderRadius:6,
+                      color:'#020A12', 
+                      fontWeight:900, 
+                      fontSize:14,
+                      fontFamily:'monospace', 
+                      letterSpacing:'0.1em', 
+                      textTransform:'uppercase',
+                      cursor:'pointer', 
+                      display:'flex', 
+                      alignItems:'center', 
+                      gap:10,
+                      boxShadow:`0 4px 20px rgba(0,207,255,0.4), inset 0 1px 0 rgba(255,255,255,0.2)`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s ease'
                     }}
                   >
-                    <FaRocket style={{ fontSize:11 }} />
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <FaRocket style={{ fontSize:13 }} />
+                    </motion.div>
                     Iniciar Sistema
                   </motion.button>
                 </Link>
 
                 <Link to="/gesture">
                   <motion.button
-                    whileHover={{ scale:1.02, background:'rgba(0,207,255,0.08)' }}
+                    whileHover={{ 
+                      scale:1.05, 
+                      background:'rgba(0,207,255,0.15)',
+                      borderColor: E.primary,
+                      boxShadow: `0 0 20px rgba(0,207,255,0.3)`
+                    }}
                     whileTap={{ scale:0.97 }}
                     style={{
-                      padding:'12px 26px',
-                      background:'transparent',
-                      border:`1px solid ${E.primary}`,
-                      borderRadius:4,
-                      color: E.primary, fontWeight:700, fontSize:13,
-                      fontFamily:'monospace', letterSpacing:'0.1em', textTransform:'uppercase',
-                      cursor:'pointer', display:'flex', alignItems:'center', gap:7,
-                      transition:'background 0.2s',
+                      padding:'14px 32px',
+                      background:'rgba(0,207,255,0.05)',
+                      border:`2px solid ${E.primary}80`,
+                      borderRadius:6,
+                      color: E.primary, 
+                      fontWeight:800, 
+                      fontSize:14,
+                      fontFamily:'monospace', 
+                      letterSpacing:'0.1em', 
+                      textTransform:'uppercase',
+                      cursor:'pointer', 
+                      display:'flex', 
+                      alignItems:'center', 
+                      gap:10,
+                      transition:'all 0.3s ease',
+                      backdropFilter: 'blur(10px)'
                     }}
                   >
-                    <FaHandPaper style={{ fontSize:11 }} />
+                    <img 
+                      src={manoLogo} 
+                      alt="Hand" 
+                      style={{ width: '13px', height: '13px', objectFit: 'contain', filter: 'drop-shadow(0 0 4px rgba(0,207,255,0.6))' }}
+                    />
                     Ver Demo
                   </motion.button>
                 </Link>
               </div>
             </motion.div>
 
-            {/* RIGHT: Robot hand */}
+            {/* RIGHT: Spline 3D Robot */}
             <motion.div
               initial={{ opacity:0, scale:0.85 }}
               animate={{ opacity:1, scale:1 }}
               transition={{ duration:0.9, delay:0.25 }}
-              style={{ position:'relative', height:'clamp(340px,50vw,560px)' }}
+              style={{ position:'relative', height:'clamp(450px,60vw,700px)' }}
               className="order-first lg:order-last"
             >
-              <RobotHand3D />
+              {/* Glow effect behind Spline */}
+              <div style={{
+                position: 'absolute',
+                inset: '-20%',
+                background: 'radial-gradient(circle, rgba(0,207,255,0.15) 0%, transparent 70%)',
+                filter: 'blur(40px)',
+                zIndex: 0,
+                pointerEvents: 'none'
+              }} />
+              
+              <div style={{ 
+                position: 'relative', 
+                width: '100%', 
+                height: '100%',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: `2px solid ${E.border}`,
+                background: 'linear-gradient(135deg, rgba(0,20,40,0.4) 0%, rgba(0,10,30,0.6) 100%)',
+                boxShadow: `0 8px 32px rgba(0,207,255,0.2), inset 0 1px 0 rgba(255,255,255,0.05)`,
+                zIndex: 1
+              }}>
+                {/* Corner decorations */}
+                {['tl','tr','bl','br'].map(p => <Corner key={p} pos={p} size={16} />)}
+                
+                {/* Scan line effect */}
+                <ScanLine duration={8} />
+                
+                {/* Spline container */}
+                <div style={{ 
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'transparent'
+                }}>
+                  <SplineRobot />
+                </div>
+                
+                {/* Overlay gradient for better integration */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to bottom, transparent 0%, rgba(5,10,20,0.1) 100%)',
+                  pointerEvents: 'none',
+                  zIndex: 2
+                }} />
+              </div>
 
               {/* Floating info pill */}
               <motion.div
                 initial={{ opacity:0, y:16 }}
                 animate={{ opacity:1, y:0 }}
-                transition={{ delay:1 }}
+                transition={{ delay:1.2 }}
                 style={{
-                  position:'absolute', bottom:16, left:16, right:16,
-                  background:'rgba(5,10,20,0.85)',
-                  border:`1px solid ${E.border}`,
-                  borderRadius:4, padding:'10px 14px',
-                  backdropFilter:'blur(16px)',
+                  position:'absolute', bottom:20, left:20, right:20,
+                  background:'rgba(5,10,20,0.95)',
+                  border:`2px solid ${E.primary}40`,
+                  borderRadius:8, padding:'12px 16px',
+                  backdropFilter:'blur(20px)',
                   display:'flex', alignItems:'center', justifyContent:'space-between', gap:12,
+                  boxShadow: `0 8px 24px rgba(0,0,0,0.6), 0 0 20px rgba(0,207,255,0.1)`,
+                  zIndex: 3
                 }}
               >
                 <div>
-                  <p style={{ fontSize:10, color: E.muted, margin:0, fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.08em' }}>Sistema de IA</p>
-                  <p style={{ fontSize:13, fontWeight:700, color: E.primary, margin:0, marginTop:2, fontFamily:'monospace' }}>MediaPipe + TensorFlow.js</p>
+                  <p style={{ fontSize:10, color: E.muted, margin:0, fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.08em' }}>Modelo 3D Interactivo</p>
+                  <p style={{ fontSize:14, fontWeight:700, color: E.primary, margin:0, marginTop:3, fontFamily:'monospace', textShadow: `0 0 10px ${E.primary}40` }}>Spline + MediaPipe AI</p>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                  <span style={{ width:6, height:6, borderRadius:'50%', background:'#00FF96', display:'inline-block' }} className="animate-pulse" />
-                  <span style={{ fontSize:11, color:'#00CC78', fontFamily:'monospace' }}>Online</span>
+                  <motion.span 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    style={{ width:8, height:8, borderRadius:'50%', background:'#00FF96', display:'inline-block', boxShadow: '0 0 10px #00FF96' }} 
+                  />
+                  <span style={{ fontSize:12, color:'#00CC78', fontFamily:'monospace', fontWeight: 600 }}>Live</span>
                 </div>
               </motion.div>
             </motion.div>

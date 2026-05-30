@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import {
   FaHome,
-  FaHandPaper,
   FaHistory,
   FaChartBar,
   FaFileAlt,
@@ -14,10 +13,21 @@ import {
   FaChevronLeft,
   FaChevronRight
 } from 'react-icons/fa';
+import manoLogo from '../assets/mano.png';
+
+// Custom component for the hand logo icon
+const HandLogoIcon = ({ className }) => (
+  <img 
+    src={manoLogo} 
+    alt="IA Gestual" 
+    className={className}
+    style={{ width: '1.25rem', height: '1.25rem', objectFit: 'contain', filter: 'drop-shadow(0 0 4px rgba(0,207,255,0.4))' }}
+  />
+);
 
 const menuItems = [
   { path: '/dashboard', icon: FaHome, label: 'Dashboard', color: 'cyan' },
-  { path: '/gesture', icon: FaHandPaper, label: 'IA Gestual', color: 'green' },
+  { path: '/gesture', icon: HandLogoIcon, label: 'IA Gestual', color: 'green', isCustomIcon: true },
   { path: '/history', icon: FaHistory, label: 'Historial', color: 'yellow' },
   { path: '/analytics', icon: FaChartBar, label: 'Analytics', color: 'purple' },
   { path: '/reports', icon: FaFileAlt, label: 'Reportes', color: 'blue' },
@@ -128,7 +138,11 @@ const Sidebar = () => {
                     }`}
                     title={isCollapsed ? item.label : ''}
                   >
-                    <Icon className={`text-lg sm:text-xl flex-shrink-0 ${isActive ? 'text-primary' : 'text-gray-400 group-hover:text-primary'} transition-colors`} />
+                    {item.isCustomIcon ? (
+                      <Icon className={`flex-shrink-0 ${isActive ? 'brightness-125' : 'brightness-75 group-hover:brightness-125'} transition-all`} />
+                    ) : (
+                      <Icon className={`text-lg sm:text-xl flex-shrink-0 ${isActive ? 'text-primary' : 'text-gray-400 group-hover:text-primary'} transition-colors`} />
+                    )}
                     {!isCollapsed && (
                       <span className={`font-medium text-sm sm:text-base ${isActive ? 'text-primary' : 'text-gray-300 group-hover:text-white'} transition-colors`}>
                         {item.label}

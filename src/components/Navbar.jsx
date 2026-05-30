@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaHandPaper, FaBell, FaUser, FaCog, FaBars } from 'react-icons/fa';
+import { FaBell, FaUser, FaCog, FaBars } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useGesture } from '../context/GestureContext';
 import { useState } from 'react';
+import manoLogo from '../assets/mano.png';
 
 const Navbar = () => {
   const location = useLocation();
@@ -22,9 +23,13 @@ const Navbar = () => {
             <motion.div
               whileHover={{ rotate: 360, scale: 1.1 }}
               transition={{ duration: 0.5 }}
-              className="relative"
+              className="relative w-8 h-8 sm:w-10 sm:h-10"
             >
-              <FaHandPaper className="text-2xl sm:text-3xl text-primary" />
+              <img 
+                src={manoLogo} 
+                alt="HandControl AI Logo" 
+                className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(0,207,255,0.6)]"
+              />
               {isActive && (
                 <motion.div
                   className="absolute inset-0 bg-primary rounded-full"
