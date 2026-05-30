@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import GestureCamera from '../components/GestureCamera';
 import HolographicBackground from '../components/HolographicBackground';
-import GridScan from '../components/GridScan';
 import { 
   FaHandPaper, 
   FaFistRaised, 
@@ -127,32 +126,9 @@ const GesturePage = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="h-full relative"
+              className="h-full"
             >
-              {/* GridScan Background Effect */}
-              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-0">
-                <GridScan
-                  sensitivity={0.55}
-                  lineThickness={1}
-                  linesColor="#2F293A"
-                  gridScale={0.1}
-                  scanColor="#00d9ff"
-                  scanOpacity={0.5}
-                  bloomIntensity={0.6}
-                  chromaticAberration={0.002}
-                  noiseIntensity={0.01}
-                  lineJitter={0.1}
-                  scanGlow={0.5}
-                  scanSoftness={2}
-                  enablePost={true}
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </div>
-              
-              {/* Camera Component */}
-              <div className="relative z-10">
-                <GestureCamera />
-              </div>
+              <GestureCamera />
             </motion.div>
           </div>
 

@@ -17,6 +17,8 @@ export const useHandDetection = () => {
   const handsRef = useRef(null);
   const animationRef = useRef(null);
   const lastGestureTimeRef = useRef(0);
+  const lastProcessTimeRef = useRef(0);
+  const frameSkipCounterRef = useRef(0);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -74,7 +76,7 @@ export const useHandDetection = () => {
 
     ctx.strokeStyle = '#00d9ff';
     ctx.lineWidth = 2;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 0; // Reducir blur para mejor rendimiento
     ctx.shadowColor = '#00d9ff';
 
     connections.forEach(([start, end]) => {
@@ -89,18 +91,19 @@ export const useHandDetection = () => {
   }, []);
 
   const drawLandmarks = useCallback((ctx, landmarks, width, height) => {
+    ctx.shadowBlur = 0; // Reducir blur para mejor rendimiento
+    ctx.fillStyle = '#00d9ff';
+    
     landmarks.forEach((landmark, index) => {
+      const radius = (index === 0 || index === 4 || index === 8 || index === 12 || index === 16 || index === 20) ? 5 : 3;
       ctx.beginPath();
       ctx.arc(
         landmark.x * width,
         landmark.y * height,
-        index === 0 || index === 4 || index === 8 || index === 12 || index === 16 || index === 20 ? 6 : 4,
+        radius,
         0,
         2 * Math.PI
       );
-      ctx.fillStyle = '#00d9ff';
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = '#00d9ff';
       ctx.fill();
     });
   }, []);
@@ -108,7 +111,11 @@ export const useHandDetection = () => {
   const onResults = useCallback((results) => {
     if (!canvasRef.current) return;
 
-    const canvasCtx = canvasRef.current.getContext('2d', { alpha: false });
+    const canvasCtx = canvasRef.current.getContext('2d', { 
+      alpha: false,
+      desynchronized: true, // Mejor rendimiento
+      willReadFrequently: false
+    });
     const canvas = canvasRef.current;
     
     canvasCtx.save();
@@ -123,21 +130,28 @@ export const useHandDetection = () => {
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       setLandmarks(results.multiHandLandmarks);
       
-      for (const landmarks of results.multiHandLandmarks) {
-        drawConnectors(canvasCtx, landmarks, canvas.width, canvas.height);
-        drawLandmarks(canvasCtx, landmarks, canvas.width, canvas.height);
+      // Solo dibujar cada 2 frames para mejor rendimiento
+      frameSkipCounterRef.current++;
+      if (frameSkipCounterRef.current % 2 === 0) {
+        for (const landmarks of results.multiHandLandmarks) {
+          drawConnectors(canvasCtx, landmarks, canvas.width, canvas.height);
+          drawLandmarks(canvasCtx, landmarks, canvas.width, canvas.height);
+        }
       }
 
-      // Detectar gesto con throttle
-      const gesture = detectGesture(results.multiHandLandmarks);
-      if (gesture && isActive) {
-        updateGesture(gesture.name, gesture.confidence);
-        
-        const now = Date.now();
-        if (now - lastGestureTimeRef.current > 2000) {
-          addGestureToHistory(gesture);
-          lastGestureTimeRef.current = now;
+      // Detectar gesto con throttle más agresivo
+      const now = Date.now();
+      if (now - lastProcessTimeRef.current > 100) { // Procesar cada 100ms en lugar de cada frame
+        const gesture = detectGesture(results.multiHandLandmarks);
+        if (gesture && isActive) {
+          updateGesture(gesture.name, gesture.confidence);
+          
+          if (now - lastGestureTimeRef.current > 2000) {
+            addGestureToHistory(gesture);
+            lastGestureTimeRef.current = now;
+          }
         }
+        lastProcessTimeRef.current = now;
       }
     } else {
       setLandmarks(null);
@@ -152,13 +166,13 @@ export const useHandDetection = () => {
       setIsLoading(true);
       setError(null);
       
-      // Primero obtener el stream de la cámara
+      // Primero obtener el stream de la cámara con configuración optimizada
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 640 }, // Reducido de 1280 para mejor rendimiento
+          height: { ideal: 480 }, // Reducido de 720 para mejor rendimiento
           facingMode: 'user',
-          frameRate: { ideal: 30, max: 30 }
+          frameRate: { ideal: 24, max: 24 } // Reducido de 30 para mejor rendimiento
         }
       });
 
@@ -193,18 +207,18 @@ export const useHandDetection = () => {
         });
 
         hands.setOptions({
-          maxNumHands: 2,              // ✅ Detectar 2 manos
-          modelComplexity: 1,          // Modelo medio para mejor precisión
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5
+          maxNumHands: 2,              
+          modelComplexity: 0,          // Reducido a 0 para mejor rendimiento (era 1)
+          minDetectionConfidence: 0.6, // Aumentado para reducir falsos positivos
+          minTrackingConfidence: 0.6   // Aumentado para mejor tracking
         });
 
         hands.onResults(onResults);
         handsRef.current = hands;
 
-        // Procesar frames con throttle
+        // Procesar frames con throttle más agresivo
         let lastFrameTime = 0;
-        const targetFPS = 30;
+        const targetFPS = 20; // Reducido de 30 a 20 FPS para mejor rendimiento
         const frameInterval = 1000 / targetFPS;
 
         const processFrame = async (currentTime) => {

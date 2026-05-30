@@ -157,9 +157,10 @@ const GestureCamera = () => {
           />
           <canvas
             ref={canvasRef}
-            width={1280}
-            height={720}
+            width={640}
+            height={480}
             className="w-full h-full object-cover"
+            style={{ imageRendering: 'auto' }}
           />
 
           {/* Overlay when camera is off */}

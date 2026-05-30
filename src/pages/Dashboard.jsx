@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { useState, useEffect, useMemo, memo } from 'react';
 import {
   FaHandPaper, FaBullseye, FaUsers, FaClock, FaQuestionCircle,
-  FaChevronRight, FaCircle
+  FaChevronRight, FaCircle, FaDownload, FaSync, FaTrash, FaFileExport,
+  FaChartLine, FaChartBar, FaChartPie
 } from 'react-icons/fa';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -74,12 +75,18 @@ const GlowCard = ({ children, className = '', delay = 0, style = {} }) => (
     initial={{ opacity:0, y:16 }}
     animate={{ opacity:1, y:0 }}
     transition={{ delay, duration:0.5, ease:[0.22,1,0.36,1] }}
+    whileHover={{ 
+      y: -4,
+      boxShadow: `0 8px 32px rgba(0,207,255,0.25), 0 0 0 1px ${E.primary}40`,
+      transition: { duration: 0.2 }
+    }}
     style={{
       position:'relative', overflow:'hidden',
       background: E.surface,
       border: `1px solid ${E.border}`,
       borderRadius:4,
       backdropFilter:'blur(12px)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
       ...style,
     }}
     className={className}
@@ -96,36 +103,81 @@ const GlowCard = ({ children, className = '', delay = 0, style = {} }) => (
 );
 
 /* ── KPI Card ───────────────────────────────────────────── */
-const KpiCard = ({ icon: Icon, title, value, sub, trend, delay }) => (
+const KpiCard = ({ icon: Icon, title, value, sub, trend, delay, onAction }) => (
   <GlowCard delay={delay} style={{ padding:'1.25rem' }}>
     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
-      <div style={{
-        width:38, height:38, borderRadius:4,
-        background:`rgba(0,207,255,0.1)`,
-        border:`1px solid ${E.border}`,
-        display:'flex', alignItems:'center', justifyContent:'center',
-      }}>
-        <Icon style={{ color: E.primary, fontSize:16 }} />
-      </div>
-      {trend != null && (
-        <span style={{
-          fontSize:11, fontFamily:'monospace', padding:'2px 8px',
-          background: trend > 0 ? 'rgba(0,255,150,0.08)' : 'rgba(255,80,80,0.08)',
-          border: `1px solid ${trend > 0 ? 'rgba(0,255,150,0.2)' : 'rgba(255,80,80,0.2)'}`,
-          borderRadius:3,
-          color: trend > 0 ? '#00FF96' : '#FF5050',
+      <motion.div 
+        whileHover={{ scale: 1.1, rotate: 5 }}
+        transition={{ type: 'spring', stiffness: 300 }}
+        style={{
+          width:38, height:38, borderRadius:4,
+          background:`linear-gradient(135deg, rgba(0,207,255,0.2), rgba(0,84,255,0.1))`,
+          border:`1px solid ${E.border}`,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          boxShadow: `0 4px 12px rgba(0,207,255,0.3), inset 0 1px 0 rgba(255,255,255,0.1)`,
         }}>
+        <Icon style={{ color: E.primary, fontSize:16, filter: 'drop-shadow(0 0 4px rgba(0,207,255,0.8))' }} />
+      </motion.div>
+      {trend != null && (
+        <motion.span 
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: delay + 0.3, type: 'spring' }}
+          style={{
+            fontSize:11, fontFamily:'monospace', padding:'2px 8px',
+            background: trend > 0 ? 'rgba(0,255,150,0.12)' : 'rgba(255,80,80,0.12)',
+            border: `1px solid ${trend > 0 ? 'rgba(0,255,150,0.3)' : 'rgba(255,80,80,0.3)'}`,
+            borderRadius:3,
+            color: trend > 0 ? '#00FF96' : '#FF5050',
+            boxShadow: trend > 0 ? '0 2px 8px rgba(0,255,150,0.2)' : '0 2px 8px rgba(255,80,80,0.2)',
+          }}>
           {trend > 0 ? '+' : ''}{trend}%
-        </span>
+        </motion.span>
       )}
     </div>
     <p style={{ fontSize:11, fontFamily:'monospace', color: E.muted, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>
       {title}
     </p>
-    <p style={{ fontSize:28, fontWeight:700, color: E.text, lineHeight:1, marginBottom:4 }}>
+    <motion.p 
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: delay + 0.2 }}
+      style={{ 
+        fontSize:28, 
+        fontWeight:700, 
+        color: E.text, 
+        lineHeight:1, 
+        marginBottom:4,
+        textShadow: `0 0 20px ${E.primary}40, 0 0 40px ${E.primary}20`,
+      }}>
       {value}
-    </p>
-    <p style={{ fontSize:11, color: E.muted }}>{sub}</p>
+    </motion.p>
+    <p style={{ fontSize:11, color: E.muted, marginBottom: 12 }}>{sub}</p>
+    {onAction && (
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onAction}
+        style={{
+          width: '100%',
+          padding: '6px 12px',
+          background: `linear-gradient(135deg, ${E.primary}20, ${E.accent2}10)`,
+          border: `1px solid ${E.border}`,
+          borderRadius: 4,
+          color: E.primary,
+          fontSize: 11,
+          fontFamily: 'monospace',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+        onMouseEnter={e => e.currentTarget.style.borderColor = E.primary}
+        onMouseLeave={e => e.currentTarget.style.borderColor = E.border}
+      >
+        Ver Detalles →
+      </motion.button>
+    )}
   </GlowCard>
 );
 
@@ -133,16 +185,38 @@ const KpiCard = ({ icon: Icon, title, value, sub, trend, delay }) => (
 const MemoizedLineChart = memo(({ data }) => (
   <ResponsiveContainer width="100%" height={220}>
     <LineChart data={data}>
+      <defs>
+        <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={E.primary} stopOpacity={0.3} />
+          <stop offset="95%" stopColor={E.primary} stopOpacity={0} />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,207,255,0.07)" />
       <XAxis dataKey="mes" stroke={E.dim} tick={{ fontSize:11, fill:E.muted }} />
       <YAxis stroke={E.dim} tick={{ fontSize:11, fill:E.muted }} />
       <Tooltip {...CHART_STYLE} />
+      <defs>
+        <linearGradient id="colorGestos" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor={E.primary} stopOpacity={0.8}/>
+          <stop offset="95%" stopColor={E.primary} stopOpacity={0.1}/>
+        </linearGradient>
+      </defs>
       <Line
         type="monotone" dataKey="gestos"
-        stroke={E.primary} strokeWidth={2}
-        dot={{ fill:E.primary, r:3, strokeWidth:0 }}
-        activeDot={{ r:5, fill:E.primary }}
-        isAnimationActive={false}
+        stroke={E.primary} strokeWidth={3}
+        fill="url(#colorGestos)"
+        dot={{ fill:E.primary, r:4, strokeWidth:2, stroke:'#000', filter:'url(#glow)' }}
+        activeDot={{ r:6, fill:E.primary, stroke:'#000', strokeWidth:2, filter:'url(#glow)' }}
+        isAnimationActive={true}
+        animationDuration={1500}
+        animationEasing="ease-in-out"
       />
     </LineChart>
   </ResponsiveContainer>
@@ -152,11 +226,28 @@ MemoizedLineChart.displayName = 'MemoizedLineChart';
 const MemoizedBarChart = memo(({ data }) => (
   <ResponsiveContainer width="100%" height={220}>
     <BarChart data={data} barCategoryGap="35%">
+      <defs>
+        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={E.primary} stopOpacity={1} />
+          <stop offset="100%" stopColor={E.accent2} stopOpacity={0.8} />
+        </linearGradient>
+        <filter id="barShadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor={E.primary} floodOpacity="0.4"/>
+        </filter>
+      </defs>
       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,207,255,0.07)" />
       <XAxis dataKey="gesto" stroke={E.dim} angle={-12} textAnchor="end" height={60} tick={{ fontSize:10, fill:E.muted }} />
       <YAxis stroke={E.dim} tick={{ fontSize:11, fill:E.muted }} />
       <Tooltip {...CHART_STYLE} />
-      <Bar dataKey="cantidad" fill={E.primary} radius={[3,3,0,0]} isAnimationActive={false} opacity={0.85} />
+      <Bar 
+        dataKey="cantidad" 
+        fill="url(#barGradient)" 
+        radius={[6,6,0,0]} 
+        isAnimationActive={true}
+        animationDuration={1200}
+        animationEasing="ease-out"
+        style={{ filter: 'url(#barShadow)' }}
+      />
     </BarChart>
   </ResponsiveContainer>
 ));
@@ -167,14 +258,37 @@ const COLORS = ['#00CFFF','#0054FF','#00FFD1','#4477FF','#00A8CC'];
 const MemoizedPieChart = memo(({ data }) => (
   <ResponsiveContainer width="100%" height={220}>
     <PieChart>
+      <defs>
+        {COLORS.map((color, i) => (
+          <radialGradient key={i} id={`pieGradient${i}`}>
+            <stop offset="0%" stopColor={color} stopOpacity={1} />
+            <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+          </radialGradient>
+        ))}
+        <filter id="pieShadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.5"/>
+        </filter>
+      </defs>
       <Pie
         data={data} cx="50%" cy="50%"
         labelLine={false}
         label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}
-        outerRadius={72} dataKey="value"
-        style={{ fontSize:10 }} isAnimationActive={false}
+        outerRadius={72} 
+        innerRadius={35}
+        dataKey="value"
+        style={{ fontSize:10, filter: 'url(#pieShadow)' }} 
+        isAnimationActive={true}
+        animationDuration={1500}
+        animationBegin={0}
       >
-        {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+        {data.map((_, i) => (
+          <Cell 
+            key={i} 
+            fill={`url(#pieGradient${i % COLORS.length})`}
+            stroke="#000"
+            strokeWidth={2}
+          />
+        ))}
       </Pie>
       <Tooltip {...CHART_STYLE} />
     </PieChart>
@@ -183,28 +297,34 @@ const MemoizedPieChart = memo(({ data }) => (
 MemoizedPieChart.displayName = 'MemoizedPieChart';
 
 /* ── Activity item ──────────────────────────────────────── */
-const ActivityItem = memo(({ entry }) => (
+const ActivityItem = memo(({ entry, onClick }) => (
   <motion.div
     initial={{ opacity:0, x:-12 }}
     animate={{ opacity:1, x:0 }}
+    whileHover={{ scale: 1.02, x: 4 }}
+    onClick={() => onClick && onClick(entry)}
     style={{
       display:'flex', alignItems:'center', justifyContent:'space-between',
       padding:'10px 12px',
       background: E.surface,
       border: `1px solid ${E.border}`,
       borderRadius:4,
-      transition:'border-color 0.2s',
+      transition:'all 0.2s',
+      cursor: onClick ? 'pointer' : 'default',
     }}
-    whileHover={{ borderColor: E.borderHov }}
   >
     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-      <span style={{
-        width:6, height:6, borderRadius:'50%',
-        background: E.primary,
-        boxShadow:`0 0 6px ${E.primary}`,
-        flexShrink:0,
-        display:'inline-block',
-      }} />
+      <motion.span 
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        style={{
+          width:6, height:6, borderRadius:'50%',
+          background: E.primary,
+          boxShadow:`0 0 6px ${E.primary}`,
+          flexShrink:0,
+          display:'inline-block',
+        }} 
+      />
       <div>
         <p style={{ fontSize:13, fontWeight:600, color: E.text, margin:0 }}>{entry.gesture}</p>
         <p style={{ fontSize:11, color: E.muted, margin:0, marginTop:1 }}>{entry.action}</p>
@@ -226,6 +346,7 @@ ActivityItem.displayName = 'ActivityItem';
 const Dashboard = () => {
   const { stats, gestureHistory } = useGesture();
   const [showTutorial, setShowTutorial] = useState(false);
+  const [selectedChart, setSelectedChart] = useState(null);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenTutorial')) setShowTutorial(true);
@@ -234,6 +355,55 @@ const Dashboard = () => {
   const handleTutorialComplete = () => {
     localStorage.setItem('hasSeenTutorial', 'true');
     setShowTutorial(false);
+  };
+
+  // Funciones para los botones
+  const handleExportData = (chartType) => {
+    const data = chartType === 'line' ? lineData : chartType === 'bar' ? barData : pieData;
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${chartType}-data-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRefreshData = () => {
+    window.location.reload();
+  };
+
+  const handleViewDetails = (entry) => {
+    alert(`Detalles del Gesto:\n\nGesto: ${entry.gesture}\nAcción: ${entry.action}\nConfianza: ${(entry.confidence * 100).toFixed(1)}%\nHora: ${new Date(entry.timestamp).toLocaleString()}`);
+  };
+
+  const handleClearHistory = () => {
+    if (confirm('¿Estás seguro de que quieres limpiar el historial?')) {
+      localStorage.removeItem('gestureHistory');
+      window.location.reload();
+    }
+  };
+
+  const handleDownloadReport = () => {
+    const report = {
+      fecha: new Date().toLocaleString(),
+      estadisticas: stats,
+      historial: gestureHistory.slice(0, 50),
+      graficos: {
+        tendencia: lineData,
+        masUsados: barData,
+        distribucion: pieData
+      }
+    };
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte-handcontrol-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const lineData = useMemo(() => [
@@ -287,8 +457,8 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Status + Tutorial */}
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          {/* Status + Tutorial + Actions */}
+          <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
             <div style={{
               display:'flex', alignItems:'center', gap:6,
               padding:'6px 14px',
@@ -306,6 +476,46 @@ const Dashboard = () => {
                 SISTEMA ONLINE
               </span>
             </div>
+
+            <button
+              onClick={handleRefreshData}
+              style={{
+                display:'flex', alignItems:'center', gap:6,
+                padding:'6px 14px',
+                background: E.surface,
+                border: `1px solid ${E.border}`,
+                borderRadius:4,
+                color: E.dim,
+                fontSize:12, fontFamily:'monospace',
+                cursor:'pointer',
+                transition:'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = E.primary; e.currentTarget.style.color = E.primary; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = E.border; e.currentTarget.style.color = E.dim; }}
+            >
+              <FaSync style={{ fontSize:12 }} />
+              Actualizar
+            </button>
+
+            <button
+              onClick={handleDownloadReport}
+              style={{
+                display:'flex', alignItems:'center', gap:6,
+                padding:'6px 14px',
+                background: E.surface,
+                border: `1px solid ${E.border}`,
+                borderRadius:4,
+                color: E.dim,
+                fontSize:12, fontFamily:'monospace',
+                cursor:'pointer',
+                transition:'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = E.primary; e.currentTarget.style.color = E.primary; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = E.border; e.currentTarget.style.color = E.dim; }}
+            >
+              <FaDownload style={{ fontSize:12 }} />
+              Reporte
+            </button>
 
             <button
               onClick={() => setShowTutorial(true)}
@@ -331,25 +541,71 @@ const Dashboard = () => {
 
         {/* ── KPI Cards ── */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:14, marginBottom:'1.75rem' }}>
-          <KpiCard icon={FaHandPaper} title="Gestos Detectados"  value={stats.totalGestures.toLocaleString()} sub="Total acumulado"   trend={12.5} delay={0}    />
-          <KpiCard icon={FaBullseye} title="Precisión IA"        value={`${stats.accuracy}%`}                 sub="Confianza promedio" trend={2.3}  delay={0.05} />
-          <KpiCard icon={FaClock}    title="Sesiones Activas"    value={stats.activeSessions}                 sub="En este momento"    delay={0.1}  />
-          <KpiCard icon={FaUsers}    title="Usuarios"            value={stats.users}                          sub="Conectados ahora"   delay={0.15} />
+          <KpiCard icon={FaHandPaper} title="Gestos Detectados"  value={stats.totalGestures.toLocaleString()} sub="Total acumulado"   trend={12.5} delay={0} onAction={() => alert('Total de gestos detectados desde el inicio del sistema')} />
+          <KpiCard icon={FaBullseye} title="Precisión IA"        value={`${stats.accuracy}%`}                 sub="Confianza promedio" trend={2.3}  delay={0.05} onAction={() => alert('Precisión promedio del sistema de IA basada en confianza de detección')} />
+          <KpiCard icon={FaClock}    title="Sesiones Activas"    value={stats.activeSessions}                 sub="En este momento"    delay={0.1} onAction={() => alert('Número de sesiones activas en este momento')} />
+          <KpiCard icon={FaUsers}    title="Usuarios"            value={stats.users}                          sub="Conectados ahora"   delay={0.15} onAction={() => alert('Usuarios conectados actualmente al sistema')} />
         </div>
 
         {/* ── Charts row ── */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:14, marginBottom:'1.75rem' }}>
           <GlowCard delay={0.2} style={{ padding:'1.25rem' }}>
-            <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:14 }}>
-              ▸ Tendencia de Gestos
-            </p>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+              <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', margin:0 }}>
+                ▸ Tendencia de Gestos
+              </p>
+              <button
+                onClick={() => handleExportData('line')}
+                style={{
+                  padding:'4px 8px',
+                  background: E.surface,
+                  border: `1px solid ${E.border}`,
+                  borderRadius:4,
+                  color: E.dim,
+                  fontSize:10,
+                  cursor:'pointer',
+                  transition:'all 0.2s',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:4,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = E.primary; e.currentTarget.style.color = E.primary; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = E.border; e.currentTarget.style.color = E.dim; }}
+              >
+                <FaFileExport style={{ fontSize:10 }} />
+                Exportar
+              </button>
+            </div>
             <MemoizedLineChart data={lineData} />
           </GlowCard>
 
           <GlowCard delay={0.25} style={{ padding:'1.25rem' }}>
-            <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:14 }}>
-              ▸ Gestos Más Usados
-            </p>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+              <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', margin:0 }}>
+                ▸ Gestos Más Usados
+              </p>
+              <button
+                onClick={() => handleExportData('bar')}
+                style={{
+                  padding:'4px 8px',
+                  background: E.surface,
+                  border: `1px solid ${E.border}`,
+                  borderRadius:4,
+                  color: E.dim,
+                  fontSize:10,
+                  cursor:'pointer',
+                  transition:'all 0.2s',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:4,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = E.primary; e.currentTarget.style.color = E.primary; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = E.border; e.currentTarget.style.color = E.dim; }}
+              >
+                <FaFileExport style={{ fontSize:10 }} />
+                Exportar
+              </button>
+            </div>
             <MemoizedBarChart data={barData} />
           </GlowCard>
         </div>
@@ -357,19 +613,65 @@ const Dashboard = () => {
         {/* ── Pie + Activity ── */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 2fr', gap:14 }}>
           <GlowCard delay={0.3} style={{ padding:'1.25rem' }}>
-            <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:14 }}>
-              ▸ Distribución de Acciones
-            </p>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+              <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', margin:0 }}>
+                ▸ Distribución de Acciones
+              </p>
+              <button
+                onClick={() => handleExportData('pie')}
+                style={{
+                  padding:'4px 8px',
+                  background: E.surface,
+                  border: `1px solid ${E.border}`,
+                  borderRadius:4,
+                  color: E.dim,
+                  fontSize:10,
+                  cursor:'pointer',
+                  transition:'all 0.2s',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:4,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = E.primary; e.currentTarget.style.color = E.primary; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = E.border; e.currentTarget.style.color = E.dim; }}
+              >
+                <FaFileExport style={{ fontSize:10 }} />
+                Exportar
+              </button>
+            </div>
             <MemoizedPieChart data={pieData} />
           </GlowCard>
 
           <GlowCard delay={0.35} style={{ padding:'1.25rem' }}>
-            <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:14 }}>
-              ▸ Actividad Reciente
-            </p>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+              <p style={{ fontSize:12, fontFamily:'monospace', color: E.dim, letterSpacing:'0.08em', textTransform:'uppercase', margin:0 }}>
+                ▸ Actividad Reciente
+              </p>
+              <button
+                onClick={handleClearHistory}
+                style={{
+                  padding:'4px 8px',
+                  background: 'rgba(255,80,80,0.1)',
+                  border: `1px solid rgba(255,80,80,0.3)`,
+                  borderRadius:4,
+                  color: '#FF5050',
+                  fontSize:10,
+                  cursor:'pointer',
+                  transition:'all 0.2s',
+                  display:'flex',
+                  alignItems:'center',
+                  gap:4,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,80,80,0.2)'; e.currentTarget.style.borderColor = '#FF5050'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,80,80,0.1)'; e.currentTarget.style.borderColor = 'rgba(255,80,80,0.3)'; }}
+              >
+                <FaTrash style={{ fontSize:10 }} />
+                Limpiar
+              </button>
+            </div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:260, overflowY:'auto' }}>
               {recentHistory.length > 0 ? (
-                recentHistory.map(entry => <ActivityItem key={entry.id} entry={entry} />)
+                recentHistory.map(entry => <ActivityItem key={entry.id} entry={entry} onClick={handleViewDetails} />)
               ) : (
                 <div style={{ textAlign:'center', padding:'2.5rem 0' }}>
                   <FaHandPaper style={{ fontSize:32, color: E.muted, marginBottom:10, opacity:0.4 }} />
