@@ -37,7 +37,7 @@ export const useHandDetection = () => {
 
 **Solución:**
 ```javascript
-// ✅ Cargar MediaPipe con script dinámico
+// ✅ Cargar MediaPipe con script dinámico xd
 if (!window.Hands) {
   await new Promise((resolve, reject) => {
     const script = document.createElement('script');
