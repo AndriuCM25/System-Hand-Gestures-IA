@@ -23,14 +23,16 @@ export const NAV_PAGES = [
 ];
 
 export const GestureProvider = ({ children }) => {
-  const [isActive, setIsActive]           = useState(false);
+  const [isActive, setIsActive]             = useState(false);
   const [currentGesture, setCurrentGesture] = useState(null);
-  const [confidence, setConfidence]       = useState(0);
+  const [confidence, setConfidence]         = useState(0);
   const [gestureHistory, setGestureHistory] = useState([]);
-  const [userName, setUserName]           = useState('Usuario');
-  const [userRole, setUserRole]           = useState('admin');
-  const [lastAction, setLastAction]       = useState(null);   // {gesture, action, ts}
-  const [sidebarOpen, setSidebarOpen]     = useState(false);  // para Dos Dedos
+  const [predictions, setPredictions]       = useState([]);   // todas las clases TM
+  const [userName, setUserName]             = useState('Usuario');
+  const [userRole, setUserRole]             = useState('admin');
+  const [lastAction, setLastAction]         = useState(null);
+  const [sidebarOpen, setSidebarOpen]       = useState(false);
+  const [cameraActive, setCameraActive]     = useState(false); // cámara flotante activa
   const [stats, setStats] = useState({
     totalGestures: 0,
     accuracy: 98.5,
@@ -85,6 +87,10 @@ export const GestureProvider = ({ children }) => {
     setConfidence(conf);
   }, []);
 
+  const updatePredictions = useCallback((preds) => {
+    setPredictions(preds || []);
+  }, []);
+
   const login = (name, role = 'admin') => {
     setUserName(name || 'Usuario');
     setUserRole(role);
@@ -102,6 +108,7 @@ export const GestureProvider = ({ children }) => {
     isActive,
     currentGesture,
     confidence,
+    predictions,
     gestureHistory,
     stats,
     userName,
@@ -109,9 +116,12 @@ export const GestureProvider = ({ children }) => {
     lastAction,
     sidebarOpen,
     setSidebarOpen,
+    cameraActive,
+    setCameraActive,
     activateSystem,
     deactivateSystem,
     updateGesture,
+    updatePredictions,
     addGestureToHistory,
     login,
     logout,

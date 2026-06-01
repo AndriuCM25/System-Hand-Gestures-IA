@@ -4,6 +4,7 @@ import { GestureProvider } from './context/GestureContext';
 import Loader from './components/Loader';
 import InitialLoader from './components/InitialLoader';
 import GestureActionToast from './components/GestureActionToast';
+import FloatingGestureCamera from './components/FloatingGestureCamera';
 
 const Landing     = lazy(() => import('./pages/Landing'));
 const Login       = lazy(() => import('./pages/Login'));
@@ -36,6 +37,10 @@ function App() {
               <Route path="/settings"  element={<Settings />} />
             </Routes>
           </Suspense>
+
+          {/* ── Cámara flotante global — navega con gestos en todas las páginas ── */}
+          <FloatingGestureCamera />
+
           {/* Toast global de acciones por gesto */}
           <GestureActionToast />
         </Router>

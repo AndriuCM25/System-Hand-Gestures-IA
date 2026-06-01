@@ -42,7 +42,7 @@ export const useHandDetection = () => {
   const [modelReady, setModelReady] = useState(false);
   const [tmStatus,   setTmStatus]   = useState('idle'); // idle | loading | ready | error
 
-  const { updateGesture, addGestureToHistory, isActive, activateSystem } = useGesture();
+  const { updateGesture, addGestureToHistory, isActive, activateSystem, updatePredictions } = useGesture();
 
   // ─── Cargar script externo (MediaPipe) ───────────────────────────────────
   const loadScript = useCallback((src) => {
@@ -82,9 +82,11 @@ export const useHandDetection = () => {
   const classifyGesture = useCallback(async (videoEl) => {
     if (!tmModelRef.current || !videoEl) return null;
     try {
-      const predictions = await tmModelRef.current.predict(videoEl);
+      const preds = await tmModelRef.current.predict(videoEl);
+      updatePredictions(preds); // Enviar todas las probabilidades al contexto
+
       let best = { className: '', probability: 0 };
-      predictions.forEach(p => { if (p.probability > best.probability) best = p; });
+      preds.forEach(p => { if (p.probability > best.probability) best = p; });
 
       if (best.probability < CONFIDENCE_THRESHOLD) return null;
       const cfg = CLASS_MAP[best.className];
@@ -94,7 +96,7 @@ export const useHandDetection = () => {
     } catch {
       return null;
     }
-  }, []);
+  }, [updatePredictions]);
 
   // ─── Dibujar esqueleto de mano ───────────────────────────────────────────
   const drawHand = useCallback((ctx, lm, w, h) => {
