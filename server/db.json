@@ -1,0 +1,15 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Demo User",
+      "email": "demo@handcontrol.ai",
+      "password": "$2a$10$Q1NVJ5sC0ZjvqoCqqL4.cOP8dWORnwABmJtqO86d.Tc3uhZRemMq2",
+      "role": "admin",
+      "created_at": "2026-05-31T02:50:19.499Z"
+    }
+  ],
+  "gestures": [],
+  "_nextUserId": 2,
+  "_nextGestureId": 1
+}
