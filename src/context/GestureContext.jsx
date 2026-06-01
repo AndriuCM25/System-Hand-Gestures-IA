@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useRef, useCallback } from 'react';
+import { gesturesAPI } from '../services/api';
+import { supabase } from '../lib/supabase';
 
 const GestureContext = createContext();
 
@@ -10,13 +12,25 @@ export const useGesture = () => {
   return context;
 };
 
+// Orden de navegación entre páginas (para Siguiente / Anterior)
+export const NAV_PAGES = [
+  '/dashboard',
+  '/gesture',
+  '/history',
+  '/analytics',
+  '/reports',
+  '/settings'
+];
+
 export const GestureProvider = ({ children }) => {
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive]           = useState(false);
   const [currentGesture, setCurrentGesture] = useState(null);
-  const [confidence, setConfidence] = useState(0);
+  const [confidence, setConfidence]       = useState(0);
   const [gestureHistory, setGestureHistory] = useState([]);
-  const [userName, setUserName] = useState('Usuario');
-  const [userRole, setUserRole] = useState('admin');
+  const [userName, setUserName]           = useState('Usuario');
+  const [userRole, setUserRole]           = useState('admin');
+  const [lastAction, setLastAction]       = useState(null);   // {gesture, action, ts}
+  const [sidebarOpen, setSidebarOpen]     = useState(false);  // para Dos Dedos
   const [stats, setStats] = useState({
     totalGestures: 0,
     accuracy: 98.5,
@@ -24,7 +38,24 @@ export const GestureProvider = ({ children }) => {
     users: 1
   });
 
-  const addGestureToHistory = (gesture) => {
+  // Listeners externos que se suscriben a acciones de gestos
+  const actionListenersRef = useRef([]);
+
+  const subscribeToActions = useCallback((fn) => {
+    actionListenersRef.current.push(fn);
+    // Devuelve función para desuscribirse
+    return () => {
+      actionListenersRef.current = actionListenersRef.current.filter(l => l !== fn);
+    };
+  }, []);
+
+  const dispatchGestureAction = useCallback((gesture, action) => {
+    const event = { gesture, action, ts: Date.now() };
+    setLastAction(event);
+    actionListenersRef.current.forEach(fn => fn(event));
+  }, []);
+
+  const addGestureToHistory = useCallback((gesture) => {
     const newEntry = {
       id: Date.now(),
       gesture: gesture.name,
@@ -33,17 +64,15 @@ export const GestureProvider = ({ children }) => {
       timestamp: new Date().toISOString(),
       user: userName
     };
-    
     setGestureHistory(prev => [newEntry, ...prev].slice(0, 50));
-    setStats(prev => ({
-      ...prev,
-      totalGestures: prev.totalGestures + 1
-    }));
-  };
+    setStats(prev => ({ ...prev, totalGestures: prev.totalGestures + 1 }));
 
-  const activateSystem = () => {
-    setIsActive(true);
-  };
+    // Guardar en Supabase si hay sesión activa
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) gesturesAPI.save(gesture.name, gesture.action, gesture.confidence).catch(() => {});
+    });
+  }, [userName]);
+  const activateSystem = () => setIsActive(true);
 
   const deactivateSystem = () => {
     setIsActive(false);
@@ -51,10 +80,10 @@ export const GestureProvider = ({ children }) => {
     setConfidence(0);
   };
 
-  const updateGesture = (gesture, conf) => {
+  const updateGesture = useCallback((gesture, conf) => {
     setCurrentGesture(gesture);
     setConfidence(conf);
-  };
+  }, []);
 
   const login = (name, role = 'admin') => {
     setUserName(name || 'Usuario');
@@ -77,12 +106,17 @@ export const GestureProvider = ({ children }) => {
     stats,
     userName,
     userRole,
+    lastAction,
+    sidebarOpen,
+    setSidebarOpen,
     activateSystem,
     deactivateSystem,
     updateGesture,
     addGestureToHistory,
     login,
-    logout
+    logout,
+    subscribeToActions,
+    dispatchGestureAction,
   };
 
   return (

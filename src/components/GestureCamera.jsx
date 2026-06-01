@@ -1,10 +1,11 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlay, FaStop, FaCamera, FaExclamationTriangle, FaVideo, FaCheckCircle } from 'react-icons/fa';
 import { useHandDetection } from '../hooks/useHandDetection';
 import { useGesture } from '../context/GestureContext';
+import { useGestureActions } from '../hooks/useGestureActions';
 
-// Memoizar configuraciones de gestos
+// Configuración de gestos — mapeada a las clases del modelo Teachable Machine
 const GESTURE_CONFIG = {
   'Mano Abierta': {
     color: 'cyan',
@@ -70,7 +71,7 @@ const StatusOverlay = memo(({ isCameraOn }) => {
       >
         <div className="flex items-center space-x-2">
           <FaVideo className="text-primary text-xs" />
-          <span className="text-xs sm:text-sm text-primary font-mono">MediaPipe AI</span>
+          <span className="text-xs sm:text-sm text-primary font-mono">TM Model + MediaPipe</span>
         </div>
       </motion.div>
     </div>
@@ -108,20 +109,23 @@ const CornerDecorations = memo(() => (
 CornerDecorations.displayName = 'CornerDecorations';
 
 const GestureCamera = () => {
-  const { videoRef, canvasRef, isLoading, error, initializeCamera, stopCamera } = useHandDetection();
+  const { videoRef, canvasRef, isLoading, error, modelReady, initializeCamera, stopCamera } = useHandDetection();
   const { isActive, currentGesture, confidence, activateSystem, deactivateSystem } = useGesture();
   const [isCameraOn, setIsCameraOn] = useState(false);
+
+  const handleStopCamera = useCallback(() => {
+    stopCamera();
+    setIsCameraOn(false);
+    deactivateSystem();
+  }, [stopCamera, deactivateSystem]);
+
+  // ← Activa las acciones reales por gesto (navegación, sidebar, pausa)
+  useGestureActions(handleStopCamera);
 
   const handleStartCamera = async () => {
     await initializeCamera();
     setIsCameraOn(true);
     activateSystem();
-  };
-
-  const handleStopCamera = () => {
-    stopCamera();
-    setIsCameraOn(false);
-    deactivateSystem();
   };
 
   // Memoizar configuración del gesto actual
@@ -201,7 +205,9 @@ const GestureCamera = () => {
                 />
                 <div>
                   <p className="text-base sm:text-lg text-primary font-semibold mb-1">Inicializando IA...</p>
-                  <p className="text-xs sm:text-sm text-gray-400">Cargando MediaPipe Hands</p>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    {modelReady ? '✅ Modelo cargado · Iniciando cámara...' : 'Cargando modelo entrenado + MediaPipe'}
+                  </p>
                 </div>
                 <div className="flex items-center justify-center space-x-1">
                   <motion.div

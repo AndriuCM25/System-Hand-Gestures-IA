@@ -4,13 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import {
   FaHandPaper, FaUser, FaLock, FaArrowRight, FaFingerprint,
   FaShieldAlt, FaEye, FaEyeSlash, FaCheckCircle, FaTimesCircle,
-  FaBrain, FaGlobe, FaBolt, FaRobot
+  FaBrain, FaGlobe, FaBolt, FaRobot, FaUserPlus, FaSignInAlt, FaEnvelope
 } from 'react-icons/fa';
 import HolographicBackground from '../components/HolographicBackground';
 import GridScan from '../components/GridScan';
 import { useGesture } from '../context/GestureContext';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
+import { authAPI } from '../services/api';
 import Swal from 'sweetalert2';
+
+// Credenciales fijas del Admin
+const ADMIN_EMAIL    = 'adminServer@hand.pe';
+const ADMIN_PASSWORD = 'peperucho_123';
 
 /* ── Design tokens ─────────────────────────────────────── */
 const E = {
@@ -152,37 +157,39 @@ const InitScreen = ({ onDone }) => {
 };
 
 /* ── Futuristic input ───────────────────────────────────── */
-const FuturisticInput = ({ icon: Icon, name, type, value, onChange, placeholder, extra }) => {
+const FuturisticInput = ({ icon: Icon, name, type, value, onChange, placeholder, extra, readOnly }) => {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ position:'relative' }}>
       <div style={{
         position:'relative', display:'flex', alignItems:'center', gap:10,
         padding:'10px 14px',
-        background: focused ? 'rgba(0,207,255,0.06)' : E.surface,
-        border: `1px solid ${focused ? E.primary : E.border}`,
+        background: readOnly ? 'rgba(0,207,255,0.02)' : (focused ? 'rgba(0,207,255,0.06)' : E.surface),
+        border: `1px solid ${readOnly ? 'rgba(0,207,255,0.1)' : (focused ? E.primary : E.border)}`,
         borderRadius:3,
-        boxShadow: focused ? `0 0 16px rgba(0,207,255,0.12), inset 0 0 8px rgba(0,207,255,0.04)` : 'none',
+        boxShadow: (!readOnly && focused) ? `0 0 16px rgba(0,207,255,0.12), inset 0 0 8px rgba(0,207,255,0.04)` : 'none',
         transition:'all 0.25s',
+        opacity: readOnly ? 0.75 : 1,
       }}>
         <AnimatePresence>
-          {focused && ['tl','tr','bl','br'].map(p => (
+          {focused && !readOnly && ['tl','tr','bl','br'].map(p => (
             <motion.span key={p} initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
               <Corner pos={p} />
             </motion.span>
           ))}
         </AnimatePresence>
 
-        <Icon style={{ color: focused ? E.primary : E.muted, fontSize:13, flexShrink:0, transition:'color 0.2s' }} />
+        <Icon style={{ color: focused && !readOnly ? E.primary : E.muted, fontSize:13, flexShrink:0, transition:'color 0.2s' }} />
         <input
-          name={name} type={type} value={value} onChange={onChange}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          placeholder={placeholder}
+          name={name} type={type} value={value} onChange={onChange || (() => {})}
+          onFocus={() => !readOnly && setFocused(true)} onBlur={() => setFocused(false)}
+          placeholder={placeholder} readOnly={readOnly}
           style={{
             flex:1, background:'transparent',
             color: E.text, fontSize:13,
             fontFamily:'monospace', letterSpacing:'0.04em',
             outline:'none', border:'none',
+            cursor: readOnly ? 'default' : 'text',
           }}
         />
         {extra}
@@ -193,29 +200,40 @@ const FuturisticInput = ({ icon: Icon, name, type, value, onChange, placeholder,
 
 /* ── Login principal ────────────────────────────────────── */
 const Login = () => {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const { login } = useGesture();
   const { welcome, isSupported } = useVoiceAssistant();
 
-  const [ready, setReady] = useState(false);
-  const [formData, setFormData] = useState({ username:'', password:'', role:'admin' });
-  const [isLoading, setIsLoading] = useState(false);
+  const [ready,        setReady]        = useState(false);
+  const [mode,         setMode]         = useState('login');   // 'login' | 'register'
+  const [formData,     setFormData]     = useState({ username: ADMIN_EMAIL, password:'', name:'', role:'admin' });
+  const [isLoading,    setIsLoading]    = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [checks, setChecks] = useState({ length:false, uppercase:false, number:false, special:false });
-  const [strength, setStrength] = useState(0);
+  const [checks,       setChecks]       = useState({ length:false, uppercase:false, number:false, special:false });
+  const [strength,     setStrength]     = useState(0);
 
   const particles = Array.from({ length:16 }, (_, i) => ({
-    left: `${6 + (i * 6) % 90}%`,
+    left:   `${6 + (i * 6) % 90}%`,
     bottom: `${(i * 9) % 45}%`,
   }));
+
+  // Al cambiar de rol, pre-llenar email de admin
+  const handleRoleChange = (role) => {
+    setFormData(f => ({
+      ...f, role,
+      username: role === 'admin' ? ADMIN_EMAIL : '',
+      name: '',
+    }));
+    setMode('login');
+  };
 
   useEffect(() => {
     const pw = formData.password;
     const c = {
-      length: pw.length >= 8,
+      length:    pw.length >= 8,
       uppercase: /[A-Z]/.test(pw),
-      number: /[0-9]/.test(pw),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(pw),
+      number:    /[0-9]/.test(pw),
+      special:   /[!@#$%^&*(),.?":{}|<>]/.test(pw),
     };
     setChecks(c);
     setStrength(Object.values(c).filter(Boolean).length);
@@ -223,36 +241,120 @@ const Login = () => {
 
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const strengthBar = ['#1a2a30','#FF4444','#FFAA00','#4499FF','#00FF96'];
+  const strengthBar   = ['#1a2a30','#FF4444','#FFAA00','#4499FF','#00FF96'];
   const strengthLabel = ['','Débil','Media','Buena','Fuerte'];
+
+  const showSuccess = (name) => {
+    Swal.fire({
+      title: '✓ Acceso Concedido',
+      html:  `<p style="color:#7ab;font-size:13px">Bienvenido <span style="color:${E.primary};font-weight:bold">${name}</span><br>Iniciando HandControl AI…</p>`,
+      icon: 'success', background: '#060D1A', color: E.text,
+      confirmButtonColor: E.primary, timer: 2400, showConfirmButton: false,
+    });
+    if (isSupported) setTimeout(() => welcome(name), 500);
+    setTimeout(() => navigate('/dashboard'), 2400);
+  };
+
+  const showError = (msg) => {
+    Swal.fire({ title: 'Error', text: msg, icon: 'error', background: '#060D1A', color: E.text, confirmButtonColor: E.primary });
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!formData.username || !formData.password) {
-      Swal.fire({
-        title:'Campos requeridos', text:'Completa usuario y contraseña',
-        icon:'error', background:'#060D1A', color: E.text, confirmButtonColor: E.primary,
-      });
-      return;
-    }
+    const { username, password, name, role } = formData;
+
+    if (!password) return showError('Completa todos los campos');
+
     setIsLoading(true);
-    setTimeout(() => {
-      login(formData.username, formData.role);
-      Swal.fire({
-        title:'✓ Acceso Concedido',
-        html:`<p style="color:#7ab;font-size:13px">Bienvenido <span style="color:${E.primary};font-weight:bold">${formData.username}</span><br>Iniciando HandControl AI…</p>`,
-        icon:'success', background:'#060D1A', color: E.text,
-        confirmButtonColor: E.primary, timer:2400, showConfirmButton:false,
-      });
-      if (isSupported) setTimeout(() => welcome(formData.username), 500);
-      setTimeout(() => navigate('/dashboard'), 2400);
-    }, 1400);
+    try {
+      // ── ADMIN: email y contraseña fijos ──────────────────────
+      if (role === 'admin') {
+        if (!name.trim()) { setIsLoading(false); return showError('Escribe tu nombre de administrador'); }
+        if (password !== ADMIN_PASSWORD) {
+          setIsLoading(false);
+          return showError('Contraseña de administrador incorrecta');
+        }
+        try {
+          const data = await authAPI.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+          login(data.user?.user_metadata?.name || name, 'admin');
+          showSuccess(name);
+        } catch {
+          // Primera vez — registrar admin automáticamente
+          try {
+            await authAPI.register(name, ADMIN_EMAIL, ADMIN_PASSWORD);
+            const data = await authAPI.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+            login(name, 'admin');
+            showSuccess(name);
+          } catch (err2) {
+            showError(err2.message || 'Error al acceder como administrador');
+          }
+        }
+        return;
+      }
+
+      // ── USUARIO: login ────────────────────────────────────────
+      if (mode === 'login') {
+        const data = await authAPI.login(username, password);
+        const displayName = data.user?.user_metadata?.name || username;
+        login(displayName, 'operator');
+        showSuccess(displayName);
+        return;
+      }
+
+      // ── USUARIO: registro ────────────────────────────────────
+      if (!name) return showError('Escribe tu nombre completo');
+      const regData = await authAPI.register(name, username, password);
+
+      // Si Supabase requiere confirmar email
+      if (regData?.user && !regData?.session) {
+        setIsLoading(false);
+        Swal.fire({
+          title: '📧 Revisa tu correo',
+          html: `<p style="color:#7ab;font-size:13px">Cuenta creada para <b style="color:#00CFFF">${username}</b>.<br>Confirma tu email y luego inicia sesión.</p>`,
+          icon: 'info', background: '#060D1A', color: '#E0F7FF',
+          confirmButtonColor: '#00CFFF', confirmButtonText: 'Entendido',
+        });
+        setMode('login');
+        return;
+      }
+
+      // Si no hay confirmación requerida, hacer login directo
+      const data = await authAPI.login(username, password);
+      login(data.user?.user_metadata?.name || name, 'operator');
+      showSuccess(name);
+
+    } catch (err) {
+      const msg = err.message || '';
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        showError('Este email ya está registrado. Intenta iniciar sesión.');
+      } else if (msg.includes('Email not confirmed')) {
+        Swal.fire({
+          title: '📧 Email sin confirmar',
+          html: '<p style="color:#7ab;font-size:13px">Revisa tu bandeja de entrada y confirma tu cuenta antes de iniciar sesión.</p>',
+          icon: 'warning', background: '#060D1A', color: '#E0F7FF', confirmButtonColor: '#00CFFF',
+        });
+      } else if (msg.includes('Invalid login credentials')) {
+        showError('Email o contraseña incorrectos.');
+      } else if (msg.includes('Password should be at least')) {
+        showError('La contraseña debe tener al menos 6 caracteres.');
+      } else {
+        showError(msg || 'Error de autenticación. Verifica tus datos.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const quickAccess = role => setFormData({
-    username: role === 'admin' ? 'admin@handcontrol.ai' : 'operator_demo',
-    password:'Demo123!', role,
-  });
+  const quickAccess = role => {
+    handleRoleChange(role);
+    setFormData(f => ({
+      ...f,
+      username: role === 'admin' ? ADMIN_EMAIL : 'demo@handcontrol.ai',
+      name:     role === 'admin' ? 'Administrador' : 'Demo User',
+      password: role === 'admin' ? ADMIN_PASSWORD : 'Demo123!',
+      role,
+    }));
+  };
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', background: E.bg, padding:'0 1rem' }}>
@@ -433,12 +535,34 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:12 }}>
 
+                  {/* Mode toggle — solo para usuario */}
+                  {formData.role === 'operator' && (
+                    <div style={{ display:'flex', border:`1px solid ${E.border}`, borderRadius:3, overflow:'hidden', marginBottom:4 }}>
+                      {[{ k:'login', icon: FaSignInAlt, label:'Iniciar Sesión' }, { k:'register', icon: FaUserPlus, label:'Crear Cuenta' }].map(({ k, icon: Icon, label }) => (
+                        <button
+                          key={k} type="button" onClick={() => setMode(k)}
+                          style={{
+                            flex:1, padding:'9px',
+                            background: mode === k ? 'rgba(0,207,255,0.12)' : 'transparent',
+                            color: mode === k ? E.primary : E.muted,
+                            border:'none', borderRight: k === 'login' ? `1px solid ${E.border}` : 'none',
+                            fontFamily:'monospace', fontSize:11, letterSpacing:'0.08em',
+                            cursor:'pointer', transition:'all 0.2s',
+                            display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+                          }}
+                        >
+                          <Icon style={{ fontSize:10 }} /> {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Role toggle */}
                   <div style={{ display:'flex', border:`1px solid ${E.border}`, borderRadius:3, overflow:'hidden', marginBottom:4 }}>
                     {['admin','operator'].map(r => (
                       <button
                         key={r} type="button"
-                        onClick={() => setFormData({ ...formData, role:r })}
+                        onClick={() => handleRoleChange(r)}
                         style={{
                           flex:1, padding:'9px',
                           background: formData.role === r ? 'rgba(0,207,255,0.12)' : 'transparent',
@@ -453,7 +577,30 @@ const Login = () => {
                     ))}
                   </div>
 
-                  <FuturisticInput icon={FaUser}  name="username" type="text"     value={formData.username} onChange={handleChange} placeholder="usuario@handcontrol.ai" />
+                  {/* Nombre — admin siempre, usuario solo en registro */}
+                  <AnimatePresence>
+                    {(formData.role === 'admin' || (formData.role === 'operator' && mode === 'register')) && (
+                      <motion.div key="name-field" initial={{ opacity:0, height:0 }} animate={{ opacity:1, height:'auto' }} exit={{ opacity:0, height:0 }}>
+                        <FuturisticInput icon={FaUser} name="name" type="text" value={formData.name} onChange={handleChange} placeholder="Tu nombre completo" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Correo — fijo y readonly para admin */}
+                  <FuturisticInput
+                    icon={FaEnvelope} name="username" type="email"
+                    value={formData.username}
+                    onChange={formData.role === 'admin' ? undefined : handleChange}
+                    placeholder="tu@email.com"
+                    readOnly={formData.role === 'admin'}
+                    extra={formData.role === 'admin' ? (
+                      <span style={{
+                        fontSize:9, color: E.primary, fontFamily:'monospace',
+                        background:'rgba(0,207,255,0.10)', padding:'2px 7px',
+                        borderRadius:3, letterSpacing:'0.08em', whiteSpace:'nowrap',
+                      }}>SERVIDOR</span>
+                    ) : null}
+                  />
                   <FuturisticInput
                     icon={FaLock} name="password" type={showPassword ? 'text' : 'password'}
                     value={formData.password} onChange={handleChange} placeholder="Contraseña segura"
@@ -489,6 +636,25 @@ const Login = () => {
                     </motion.div>
                   )}
 
+                  {/* Info credenciales admin */}
+                  {formData.role === 'admin' && (
+                    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }}
+                      style={{
+                        padding:'8px 12px', borderRadius:3,
+                        background:'rgba(0,207,255,0.04)',
+                        border:`1px solid rgba(0,207,255,0.15)`,
+                        fontSize:11, fontFamily:'monospace', color: E.muted,
+                        display:'flex', flexDirection:'column', gap:3,
+                      }}
+                    >
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <FaShieldAlt style={{ color: E.primary, flexShrink:0 }} />
+                        <span>Correo fijo: <span style={{ color: E.primary }}>{ADMIN_EMAIL}</span></span>
+                      </div>
+                      <div style={{ paddingLeft:19, color: E.muted }}>Ingresa tu nombre y la contraseña de administrador</div>
+                    </motion.div>
+                  )}
+
                   {/* Submit */}
                   <motion.button
                     type="submit" disabled={isLoading}
@@ -515,13 +681,14 @@ const Login = () => {
                           animate={{ rotate:360 }} transition={{ duration:1, repeat:Infinity, ease:'linear' }}
                           style={{ display:'inline-block', width:13, height:13, border:'2px solid rgba(0,207,255,0.2)', borderTopColor: E.primary, borderRadius:'50%' }}
                         />
-                        Autenticando...
+                        {mode === 'register' ? 'Creando cuenta...' : 'Autenticando...'}
                       </>
                     ) : (
                       <>
-                        <FaFingerprint />
-                        Iniciar Sesión
-                        <FaArrowRight style={{ fontSize:10 }} />
+                        {mode === 'register' && formData.role === 'operator'
+                          ? <><FaUserPlus /> Crear Cuenta <FaArrowRight style={{ fontSize:10 }} /></>
+                          : <><FaFingerprint /> Iniciar Sesión <FaArrowRight style={{ fontSize:10 }} /></>
+                        }
                       </>
                     )}
                   </motion.button>

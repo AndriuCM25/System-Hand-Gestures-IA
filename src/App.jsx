@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GestureProvider } from './context/GestureContext';
 import Loader from './components/Loader';
 import InitialLoader from './components/InitialLoader';
+import GestureActionToast from './components/GestureActionToast';
 
 const Landing     = lazy(() => import('./pages/Landing'));
 const Login       = lazy(() => import('./pages/Login'));
@@ -35,6 +36,8 @@ function App() {
               <Route path="/settings"  element={<Settings />} />
             </Routes>
           </Suspense>
+          {/* Toast global de acciones por gesto */}
+          <GestureActionToast />
         </Router>
       )}
     </GestureProvider>
