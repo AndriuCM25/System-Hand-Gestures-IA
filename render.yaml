@@ -1,0 +1,18 @@
+services:
+  # ── Backend API — HandControl AI ──────────────────────────────────────────
+  - type: web
+    name: handcontrol-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://frontend-six-smoky-25.vercel.app,https://frontend-1q9d64xe8-valentino-cms-projects.vercel.app

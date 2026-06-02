@@ -8,8 +8,8 @@ const path     = require('path');
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const app        = express();
-const PORT       = 3001;
-const JWT_SECRET = 'handcontrol-secret-key-2026';
+const PORT       = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'handcontrol-secret-key-2026';
 
 // ─── Base de datos JSON (lowdb) ───────────────────────────────────────────────
 const adapter = new FileSync(path.join(__dirname, 'db.json'));
@@ -33,7 +33,19 @@ if (!db.get('users').find({ email: 'demo@handcontrol.ai' }).value()) {
 }
 
 // ─── Middlewares ──────────────────────────────────────────────────────────────
-app.use(cors({ origin: ['http://localhost:5173','http://localhost:5174','http://localhost:5175'], credentials: true }));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'https://frontend-six-smoky-25.vercel.app',
+        'https://frontend-1q9d64xe8-valentino-cms-projects.vercel.app',
+      ],
+  credentials: true
+}));
+
 app.use(express.json());
 
 const requireAuth = (req, res, next) => {

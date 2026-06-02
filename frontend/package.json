@@ -6,7 +6,11 @@
   "description": "Sistema Inteligente de Navegación por Gestos con IA y Visión Computacional - Production Ready",
   "author": "HandControl AI Team",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
+
     "dev": "vite",
     "build": "vite build",
     "build:analyze": "vite build --mode analyze",
